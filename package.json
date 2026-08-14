@@ -6,6 +6,7 @@
     "redis": "^5.10.0"
   },
   "scripts": {
-    "start": "nodemon app.js"
+    "start": "nodemon app.js",
+    "worker": "node worker.js"
   }
 }
