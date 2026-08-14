@@ -1,4 +1,4 @@
-# Redis-Backed Distributed Job Queue
+# AtomMQ - Redis-Backed Distributed Job Queue
 
 A robust, distributed producer/consumer job queue built with Node.js, Express, and Redis.
 
