@@ -68,6 +68,36 @@ const getProcessingJobs = async () => {
   return redisClient.lRange(KEYS.processingQueue, 0, -1);
 };
 
+//mutex
+
+const LOCK_TTL_SECONDS = 300;
+
+const acquireLock = async (jobId) => {
+  const result = await redisClient.set(KEYS.lockKey(jobId), "active", {
+    NX: true,
+    EX: LOCK_TTL_SECONDS,
+  });
+
+  return result === "OK";
+};
+
+const acknowledgeJob = async (jobId) => {
+  const multi = redisClient.multi();
+
+  multi.lRem(KEYS.processingQueue, 1, jobId);
+  multi.hSet(KEYS.jobHash(jobId), {
+    status: "completed",
+    updated_at: String(Date.now()),
+  });
+  multi.del(KEYS.lockKey(jobId));
+
+  return multi.exec();
+};
+
+const incrementAttempts = async (jobId) => {
+  return redisClient.hIncrBy(KEYS.jobHash(jobId), "attempts", 1);
+};
+
 module.exports = {
   createJob,
   getJob,
@@ -76,4 +106,7 @@ module.exports = {
   getPendingCount,
   getProcessingCount,
   getProcessingJobs,
+  acquireLock,
+  acknowledgeJob,
+  incrementAttempts,
 };
