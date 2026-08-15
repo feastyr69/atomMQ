@@ -98,6 +98,24 @@ const incrementAttempts = async (jobId) => {
   return redisClient.hIncrBy(KEYS.jobHash(jobId), "attempts", 1);
 };
 
+const isLockAlive = async (jobId) => {
+  const exists = await redisClient.exists(KEYS.lockKey(jobId));
+  return exists === 1;
+};
+
+const requeueJob = async (jobId) => {
+  const multi = redisClient.multi();
+
+  multi.lRem(KEYS.processingQueue, 1, jobId);
+  multi.lPush(KEYS.pendingQueue, jobId);
+  multi.hSet(KEYS.jobHash(jobId), {
+    status: "pending",
+    updated_at: String(Date.now()),
+  });
+
+  return multi.exec();
+};
+
 module.exports = {
   createJob,
   getJob,
@@ -109,4 +127,7 @@ module.exports = {
   acquireLock,
   acknowledgeJob,
   incrementAttempts,
+  isLockAlive,
+  requeueJob,
 };
+
