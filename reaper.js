@@ -5,7 +5,7 @@ const {
   requeueJob,
 } = require("./redis/schema/jobQueue.js");
 
-const REAP_INTERVAL_MS = 60 * 1000;
+const REAP_INTERVAL_MS = 40 * 1000;
 
 const reap = async () => {
   const processingJobs = await getProcessingJobs();
@@ -29,7 +29,7 @@ const reap = async () => {
 
 const run = async () => {
   await redisClient.connect();
-  console.log("[reaper] connected to Redis, scanning every 60s...");
+  console.log("[reaper] connected to Redis, scanning every 40s...");
 
   await reap();
 
