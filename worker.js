@@ -6,6 +6,8 @@ const {
   acquireLock,
   acknowledgeJob,
   incrementAttempts,
+  moveToDelayed,
+  moveToDeadLetter,
 } = require("./redis/schema/jobQueue.js");
 
 const POLL_TIMEOUT = 5;
@@ -15,7 +17,7 @@ const simulateWork = (jobId, payload) => {
     const delayMs = 2000 + Math.random() * 1000;
 
     setTimeout(() => {
-      if (Math.random() < 0.2) {
+      if (Math.random() < 0.2) {           //20% chance of failure
         reject(new Error(`Simulated failure for job ${jobId}`));
       } else {
         resolve();
@@ -37,10 +39,24 @@ const processJob = async (jobId) => {
   const job = await getJob(jobId);
   console.log(`[worker] processing job ${jobId}`, job.payload);
 
-  await simulateWork(jobId, job.payload);
+  try {
+    await simulateWork(jobId, job.payload);
+    await acknowledgeJob(jobId);
+    console.log(`[worker] job ${jobId} completed successfully`);
+  } catch (err) {
+    console.error(`[worker] job ${jobId} failed: ${err.message}`);
 
-  await acknowledgeJob(jobId);
-  console.log(`[worker] job ${jobId} completed successfully`);
+    //exponential retry logic
+    if (job.attempts < job.max_attempts) {
+      const delayMs = Math.pow(2, job.attempts) * 1000;
+      const executeAt = Date.now() + delayMs;
+      await moveToDelayed(jobId, executeAt);
+      console.log(`[worker] job ${jobId} delayed for ${delayMs}ms (attempt ${job.attempts}/${job.max_attempts})`);
+    } else {
+      await moveToDeadLetter(jobId);
+      console.log(`[worker] job ${jobId} moved to dead-letter queue (exhausted ${job.max_attempts} attempts)`);
+    }
+  }
 };
 
 const run = async () => {

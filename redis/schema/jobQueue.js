@@ -116,6 +116,58 @@ const requeueJob = async (jobId) => {
   return multi.exec();
 };
 
+const moveToDelayed = async (jobId, executeAt) => {
+  const multi = redisClient.multi();
+
+  multi.lRem(KEYS.processingQueue, 1, jobId);
+  multi.zAdd(KEYS.delayedQueue, { score: executeAt, value: jobId });
+  multi.del(KEYS.lockKey(jobId));
+  multi.hSet(KEYS.jobHash(jobId), {
+    status: "delayed",
+    updated_at: String(Date.now()),
+  });
+
+  return multi.exec();
+};
+
+const moveToDeadLetter = async (jobId) => {
+  const multi = redisClient.multi();
+
+  multi.lRem(KEYS.processingQueue, 1, jobId);
+  multi.lPush(KEYS.deadLetterQueue, jobId);
+  multi.del(KEYS.lockKey(jobId));
+  multi.hSet(KEYS.jobHash(jobId), {
+    status: "failed",
+    updated_at: String(Date.now()),
+  });
+
+  return multi.exec();
+};
+
+const pollDelayedJobs = async () => {
+  const now = Date.now();
+  const readyJobIds = await redisClient.zRangeByScore(
+    KEYS.delayedQueue,
+    "-inf",
+    String(now)
+  );
+
+  for (const jobId of readyJobIds) {
+    const multi = redisClient.multi();
+
+    multi.zRem(KEYS.delayedQueue, jobId);
+    multi.lPush(KEYS.pendingQueue, jobId);
+    multi.hSet(KEYS.jobHash(jobId), {
+      status: "pending",
+      updated_at: String(now),
+    });
+
+    await multi.exec();
+  }
+
+  return readyJobIds.length;
+};
+
 module.exports = {
   createJob,
   getJob,
@@ -129,5 +181,7 @@ module.exports = {
   incrementAttempts,
   isLockAlive,
   requeueJob,
+  moveToDelayed,
+  moveToDeadLetter,
+  pollDelayedJobs,
 };
-
