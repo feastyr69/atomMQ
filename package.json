@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "concurrently": "^10.0.5",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
@@ -9,7 +10,8 @@
     "ws": "^8.21.3"
   },
   "scripts": {
-    "start": "nodemon app.js",
+    "start": "concurrently \"node app.js\" \"node worker.js\" \"node worker.js\" \"node worker.js\" \"node reaper.js\"",
+    "dev": "nodemon app.js",
     "worker": "node worker.js",
     "reaper": "node reaper.js"
   }
