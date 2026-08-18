@@ -56,7 +56,7 @@ export function AddJobDialog({ onSubmit, isHero = false }) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-full font-semibold text-lg transition-all hover:shadow-[0_0_20px_rgba(167,139,250,0.4)] cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white border border-white/20 backdrop-blur-md rounded-full font-serif italic tracking-wide text-lg transition-all hover:bg-white/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)] cursor-pointer"
         >
           Simulate Load
           <svg className="w-5 h-5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -68,7 +68,7 @@ export function AddJobDialog({ onSubmit, isHero = false }) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm transition-all hover:shadow-lg hover:shadow-primary/25 cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 text-zinc-300 border border-white/10 hover:border-white/30 rounded-lg font-serif italic text-sm transition-all hover:text-white hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] cursor-pointer"
           id="add-job-button"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -88,7 +88,7 @@ export function AddJobDialog({ onSubmit, isHero = false }) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setIsOpen(false)}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+                className="fixed inset-0 bg-[#010204]/80 backdrop-blur-md z-50"
               />
 
               {/* Dialog */}
@@ -100,22 +100,22 @@ export function AddJobDialog({ onSubmit, isHero = false }) {
                 className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
               >
                 <div
-                  className="w-full max-w-md rounded-xl border border-border bg-card shadow-xl flex flex-col max-h-[90vh] overflow-hidden"
+                  className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0a0a0a]/90 backdrop-blur-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[90vh] overflow-hidden"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Header */}
-                  <div className="flex items-center justify-between px-6 py-5 border-b border-border/50 shrink-0 bg-muted/30">
+                  <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 shrink-0 bg-transparent">
                     <div>
-                      <h2 className="text-base font-semibold text-foreground">
-                        Add New Job
+                      <h2 className="text-lg font-serif italic tracking-wide text-white">
+                        Simulate Workload
                       </h2>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-xs text-zinc-500 font-mono mt-1 uppercase tracking-widest">
                         Submit a new task to the queue
                       </p>
                     </div>
                     <button
                       onClick={() => setIsOpen(false)}
-                      className="p-2 -mr-2 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      className="p-2 -mr-2 rounded-md hover:bg-white/5 text-zinc-500 hover:text-white transition-colors cursor-pointer"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M18 6 6 18" /><path d="m6 6 12 12" />
@@ -129,16 +129,16 @@ export function AddJobDialog({ onSubmit, isHero = false }) {
                     <div className="space-y-3">
                       <label
                         htmlFor="payload-input"
-                        className="text-sm font-medium text-foreground"
+                        className="text-xs font-mono uppercase tracking-widest text-zinc-400"
                       >
-                        Payload
+                        Payload Data
                       </label>
                       <textarea
                         id="payload-input"
                         value={payload}
                         onChange={(e) => setPayload(e.target.value)}
                         rows={5}
-                        className="w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-all resize-none shadow-sm"
+                        className="w-full rounded-lg border border-white/10 bg-black/50 px-3 py-3 text-sm font-mono text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-white/30 focus:border-white/30 transition-all resize-none shadow-inner"
                         placeholder='{ "key": "value" }'
                       />
                     </div>
@@ -147,10 +147,10 @@ export function AddJobDialog({ onSubmit, isHero = false }) {
                     <div className="space-y-3">
                       <label
                         htmlFor="max-attempts-input"
-                        className="text-sm font-medium text-foreground flex items-center justify-between"
+                        className="text-xs font-mono uppercase tracking-widest text-zinc-400 flex items-center justify-between"
                       >
                         <span>Max Attempts</span>
-                        <span className="text-muted-foreground">{maxAttempts}</span>
+                        <span className="text-white">{maxAttempts}</span>
                       </label>
                       <input
                         id="max-attempts-input"
@@ -161,7 +161,7 @@ export function AddJobDialog({ onSubmit, isHero = false }) {
                         onChange={(e) =>
                           setMaxAttempts(parseInt(e.target.value, 10) || 1)
                         }
-                        className="w-full accent-primary"
+                        className="w-full accent-white"
                       />
                     </div>
 
@@ -169,10 +169,10 @@ export function AddJobDialog({ onSubmit, isHero = false }) {
                     <div className="space-y-3">
                       <label
                         htmlFor="job-count-input"
-                        className="text-sm font-medium text-foreground flex items-center justify-between"
+                        className="text-xs font-mono uppercase tracking-widest text-zinc-400 flex items-center justify-between"
                       >
                         <span>Concurrent Jobs</span>
-                        <span className="text-primary font-bold">{jobCount}</span>
+                        <span className="text-white font-bold">{jobCount}</span>
                       </label>
                       <input
                         id="job-count-input"
@@ -183,9 +183,9 @@ export function AddJobDialog({ onSubmit, isHero = false }) {
                         onChange={(e) =>
                           setJobCount(parseInt(e.target.value, 10) || 1)
                         }
-                        className="w-full accent-primary"
+                        className="w-full accent-white"
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-zinc-500 font-mono">
                         Simulate bulk insertion to test queue concurrency.
                       </p>
                     </div>
@@ -209,18 +209,18 @@ export function AddJobDialog({ onSubmit, isHero = false }) {
                     </AnimatePresence>
 
                     {/* Actions */}
-                    <div className="flex justify-end gap-3 pt-4 border-t border-border/50 shrink-0">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-white/10 shrink-0">
                       <button
                         type="button"
                         onClick={() => setIsOpen(false)}
-                        className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 rounded-md transition-colors cursor-pointer border border-transparent hover:border-border/50"
+                        className="px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/5 rounded-md transition-colors cursor-pointer border border-transparent"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background hover:bg-foreground/90 rounded-md font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+                        className="inline-flex items-center gap-2 px-6 py-2 bg-white text-black hover:bg-zinc-200 rounded-md font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]"
                         id="submit-job-button"
                       >
                         {isSubmitting ? (

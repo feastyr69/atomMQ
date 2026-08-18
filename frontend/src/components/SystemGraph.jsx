@@ -82,8 +82,8 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between p-8 border-b border-white/5">
         <div>
-          <h2 className="text-2xl font-serif italic text-white tracking-wide">Flowchart Topology</h2>
-          <p className="text-zinc-500 text-xs uppercase tracking-[0.2em] mt-1">Live Mermaid-style Graph Visualization</p>
+          <h2 className="text-2xl font-serif italic text-white tracking-wide">Live Queue Simulation</h2>
+          <p className="text-zinc-500 text-xs uppercase tracking-[0.2em] mt-1">Graph Based Visualization</p>
         </div>
       </div>
 
@@ -103,10 +103,10 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                   <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.15)" />
                 </marker>
                 <marker id="arrow-active" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#60A5FA" />
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#ffffff" />
                 </marker>
                 <marker id="arrow-fail" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#a1a1aa" />
                 </marker>
               </defs>
 
@@ -134,7 +134,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                     <motion.path
                       d={`M 55 45 C 65 45, 65 ${targetY}, 75 ${targetY}`}
                       fill="none"
-                      stroke={isWorking ? "#60A5FA" : "rgba(255,255,255,0.15)"}
+                      stroke={isWorking ? "#ffffff" : "rgba(255,255,255,0.15)"}
                       strokeWidth={isWorking ? 2 : 2}
                       strokeDasharray="2 2"
                       vectorEffect="non-scaling-stroke"
@@ -176,13 +176,13 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
 
           {/* Middle Column: Queues */}
           <div className="relative z-10 w-[20%] flex flex-col items-center">
-            
+
             {/* Node 2: Redis Hub */}
-            <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-4 md:p-6 shadow-[0_0_40px_rgba(0,100,255,0.05)] text-center relative overflow-hidden">
+            <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-4 md:p-6 shadow-[0_0_40px_rgba(255,255,255,0.03)] text-center relative overflow-hidden">
               {stats.processing > 0 && (
-                <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 shadow-[0_0_20px_#3b82f6]" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-white shadow-[0_0_20px_#ffffff]" />
               )}
-              <div className="text-[10px] md:text-xs uppercase tracking-widest text-blue-400 mb-4 md:mb-6 font-bold flex justify-center items-center gap-2">
+              <div className="text-[10px] md:text-xs uppercase tracking-widest text-zinc-200 mb-4 md:mb-6 font-bold flex justify-center items-center gap-2">
                 <Database className="w-3 h-3 md:w-4 md:h-4" /> Redis Queue
               </div>
 
@@ -192,13 +192,13 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                   <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase mt-1">Pending</div>
                 </div>
                 <div className="bg-black/50 p-2 md:p-3 rounded-lg border border-white/5">
-                  <div className="text-xl md:text-3xl font-light text-blue-400">{stats.processing}</div>
+                  <div className="text-xl md:text-3xl font-light text-white">{stats.processing}</div>
                   <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase mt-1">Active</div>
                 </div>
               </div>
 
               <div className="flex gap-2 justify-center mt-3 md:mt-4">
-                <div className="px-2 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] md:text-[10px] rounded-md font-mono">
+                <div className="px-2 py-1 bg-zinc-800/50 border border-white/10 text-zinc-400 text-[9px] md:text-[10px] rounded-md font-mono">
                   Dead: {stats.deadLetter}
                 </div>
               </div>
@@ -206,11 +206,11 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
 
             {/* Node 4: Delayed Queue */}
             <div className="absolute top-[130%] w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-4 md:p-6 shadow-2xl text-center overflow-hidden group hover:border-white/30 transition-colors flex flex-col items-center">
-              <div className="text-[10px] md:text-xs uppercase tracking-widest text-orange-400 mb-3 md:mb-4 font-bold flex items-center justify-center gap-2">
+              <div className="text-[10px] md:text-xs uppercase tracking-widest text-zinc-400 mb-3 md:mb-4 font-bold flex items-center justify-center gap-2">
                 Delayed Queue
               </div>
               <div className="bg-black/50 p-2 md:p-3 rounded-lg border border-white/5 w-full">
-                <div className="text-xl md:text-3xl font-light text-orange-400">{stats.delayed}</div>
+                <div className="text-xl md:text-3xl font-light text-white">{stats.delayed}</div>
                 <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase mt-1">Waiting Retry</div>
               </div>
             </div>
@@ -227,8 +227,8 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                 <div
                   key={worker.id}
                   className={`relative w-full aspect-square md:aspect-auto md:h-56 rounded-xl border flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-300
-                  ${isWorking ? "border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.15)]" : ""}
-                  ${isFailed ? "border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.15)]" : ""}
+                  ${isWorking ? "border-white/30 shadow-[0_0_30px_rgba(255,255,255,0.1)]" : ""}
+                  ${isFailed ? "border-zinc-500/50 shadow-[0_0_30px_rgba(255,255,255,0.05)]" : ""}
                   ${!isWorking && !isFailed ? "border-white/10 bg-[#0a0a0a]" : ""}
                 `}
                 >
@@ -245,11 +245,11 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                   {/* Worker Header Info */}
                   <div className="relative z-10 p-3 bg-gradient-to-b from-black/90 via-black/50 to-transparent flex justify-between items-start">
                     <div className="flex flex-col">
-                      <span className="font-mono text-xs md:text-sm text-white font-bold tracking-tight">{worker.name}</span>
+                      <span className="font-serif italic text-sm md:text-base text-white tracking-wide">{worker.name}</span>
                       <span className="text-[10px] text-zinc-400 font-mono mt-0.5">PID: 9{worker.id}34</span>
                     </div>
                     <span className={`px-2 py-1 text-[9px] uppercase tracking-wider font-bold rounded-md bg-black/60 backdrop-blur-md border border-white/10
-                    ${isWorking ? "text-blue-400 border-blue-500/30" : isFailed ? "text-red-400 border-red-500/30" : "text-zinc-400"}`}>
+                    ${isWorking ? "text-zinc-200 border-white/30" : isFailed ? "text-zinc-400 border-zinc-500/30" : "text-zinc-400"}`}>
                       {worker.state}
                     </span>
                   </div>
@@ -259,13 +259,13 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                     <div className="w-full bg-black/80 rounded border border-white/10 p-2 flex flex-col font-mono text-[10px] shadow-inner">
                       {isWorking ? (
                         <>
-                          <span className="text-blue-300/90">{`> RECV job_payload`}</span>
+                          <span className="text-zinc-300">{`> RECV job_payload`}</span>
                           <span className="text-white/60 animate-pulse">{`> processing...`}</span>
                         </>
                       ) : isFailed ? (
                         <>
-                          <span className="text-red-400/90">{`> FATAL_EXCEPTION`}</span>
-                          <span className="text-red-400/60">{`> core dumped`}</span>
+                          <span className="text-zinc-400">{`> FATAL_EXCEPTION`}</span>
+                          <span className="text-zinc-500">{`> core dumped`}</span>
                         </>
                       ) : (
                         <>
