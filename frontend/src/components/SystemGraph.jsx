@@ -12,6 +12,48 @@ const GIFS = {
 
 const WORKER_COUNT = 3;
 
+function AnimatedStat({ value }) {
+  const [deltas, setDeltas] = useState([]);
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    if (prevValue.current !== value && prevValue.current !== undefined) {
+      const diff = value - prevValue.current;
+      if (diff !== 0) {
+        const id = Date.now() + Math.random();
+        setDeltas((d) => [...d, { id, diff }]);
+        setTimeout(() => {
+          setDeltas((d) => d.filter((item) => item.id !== id));
+        }, 1200);
+      }
+    }
+    prevValue.current = value;
+  }, [value]);
+
+  return (
+    <div className="relative inline-flex justify-center items-center">
+      <span>{value}</span>
+      <AnimatePresence>
+        {deltas.map(({ id, diff }) => (
+          <motion.div
+            key={id}
+            initial={{ opacity: 0, y: 0, scale: 0.8 }}
+            animate={{ opacity: 1, y: -25, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className={`absolute font-mono text-xs md:text-sm font-bold pointer-events-none drop-shadow-md whitespace-nowrap ${
+              diff > 0 ? "text-white" : "text-zinc-400"
+            }`}
+            style={{ left: "120%", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}
+          >
+            {diff > 0 ? `+${diff}` : diff}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function SystemGraph({ stats, jobs, bulkAddJobs }) {
   const [workers, setWorkers] = useState(
     Array.from({ length: WORKER_COUNT }).map((_, i) => ({
@@ -188,18 +230,22 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
 
               <div className="grid grid-cols-2 gap-2 md:gap-4">
                 <div className="bg-black/50 p-2 md:p-3 rounded-lg border border-white/5">
-                  <div className="text-xl md:text-3xl font-light text-white">{stats.pending}</div>
+                  <div className="text-xl md:text-3xl font-light text-white">
+                    <AnimatedStat value={stats.pending} />
+                  </div>
                   <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase mt-1">Pending</div>
                 </div>
                 <div className="bg-black/50 p-2 md:p-3 rounded-lg border border-white/5">
-                  <div className="text-xl md:text-3xl font-light text-white">{stats.processing}</div>
+                  <div className="text-xl md:text-3xl font-light text-white">
+                    <AnimatedStat value={stats.processing} />
+                  </div>
                   <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase mt-1">Active</div>
                 </div>
               </div>
 
               <div className="flex gap-2 justify-center mt-3 md:mt-4">
-                <div className="px-2 py-1 bg-zinc-800/50 border border-white/10 text-zinc-400 text-[9px] md:text-[10px] rounded-md font-mono">
-                  Dead: {stats.deadLetter}
+                <div className="px-2 py-1 bg-zinc-800/50 border border-white/10 text-zinc-400 text-[9px] md:text-[10px] rounded-md font-mono flex items-center gap-1">
+                  Dead: <AnimatedStat value={stats.deadLetter} />
                 </div>
               </div>
             </div>
@@ -210,7 +256,9 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                 Delayed Queue
               </div>
               <div className="bg-black/50 p-2 md:p-3 rounded-lg border border-white/5 w-full">
-                <div className="text-xl md:text-3xl font-light text-white">{stats.delayed}</div>
+                <div className="text-xl md:text-3xl font-light text-white">
+                  <AnimatedStat value={stats.delayed} />
+                </div>
                 <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase mt-1">Waiting Retry</div>
               </div>
             </div>
