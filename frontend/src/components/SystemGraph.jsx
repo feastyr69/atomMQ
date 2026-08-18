@@ -123,9 +123,9 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                 cy="45"
                 r="0.6"
                 fill="#fff"
-                initial={{ offsetDistance: "0%" }}
-                animate={{ offsetDistance: "100%" }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                initial={{ offsetDistance: "0%", opacity: 0 }}
+                animate={{ offsetDistance: "100%", opacity: [0, 1, 1, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear", times: [0, 0.2, 0.8, 1] }}
                 style={{ offsetPath: `path('M 18 45 L 35 45')` }}
                 className="shadow-[0_0_8px_#fff]"
               />
@@ -162,9 +162,9 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                       cy="45"
                       r="0.8"
                       fill="#fff"
-                      initial={{ offsetDistance: "0%" }}
-                      animate={{ offsetDistance: "100%" }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      initial={{ offsetDistance: "0%", opacity: 0 }}
+                      animate={{ offsetDistance: "100%", opacity: [0, 1, 1, 0] }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear", times: [0, 0.2, 0.8, 1] }}
                       style={{ offsetPath: `path('M 55 45 C 65 45, 65 ${targetY}, 75 ${targetY}')` }}
                       className="shadow-[0_0_10px_#fff]"
                     />
