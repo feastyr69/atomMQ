@@ -1,18 +1,26 @@
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useDashboard } from "./hooks/useDashboard";
 import { StatsCards } from "./components/StatsCards";
 import { QueueVisualizer } from "./components/QueueVisualizer";
 import { JobTable } from "./components/JobTable";
-import { AddJobDialog } from "./components/AddJobDialog";
 import { ConnectionStatus } from "./components/ConnectionStatus";
+import { Hero } from "./components/Hero";
 
-function App() {
-  const { stats, jobs, connected, addJob } = useDashboard();
+export default function App() {
+  const { stats, jobs, connected, bulkAddJobs } = useDashboard();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-lg">
+      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-lg shrink-0">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -40,14 +48,16 @@ function App() {
 
             <div className="flex items-center gap-5">
               <ConnectionStatus connected={connected} />
-              <AddJobDialog onSubmit={addJob} />
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="relative max-w-7xl mx-auto px-6 py-8 space-y-6">
+      {/* Hero Section */}
+      <Hero bulkAddJobs={bulkAddJobs} />
+
+      {/* Main Content Area */}
+      <main className="relative flex-1 w-full max-w-7xl mx-auto px-6 py-12 space-y-8">
         <StatsCards stats={stats} />
         <QueueVisualizer stats={stats} />
         <JobTable jobs={jobs} />
@@ -67,5 +77,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

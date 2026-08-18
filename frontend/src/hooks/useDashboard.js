@@ -70,5 +70,26 @@ export function useDashboard() {
     return res.json();
   }, []);
 
-  return { stats, jobs, connected, addJob };
+  const bulkAddJobs = useCallback(async (basePayload, count, maxAttempts = 3) => {
+    const promises = [];
+    for (let i = 0; i < count; i++) {
+      const payload = typeof basePayload === 'object' 
+        ? { ...basePayload, _bulkId: i, _timestamp: Date.now() }
+        : `${basePayload} (Bulk ${i + 1}/${count})`;
+        
+      promises.push(
+        fetch("http://localhost:3000/jobs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payload, max_attempts: maxAttempts }),
+        }).then(res => {
+          if (!res.ok) throw new Error(`Failed job ${i}`);
+          return res.json();
+        })
+      );
+    }
+    return Promise.allSettled(promises);
+  }, []);
+
+  return { stats, jobs, connected, addJob, bulkAddJobs };
 }

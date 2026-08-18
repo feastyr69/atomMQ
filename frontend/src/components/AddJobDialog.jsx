@@ -2,10 +2,11 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function AddJobDialog({ onSubmit }) {
+export function AddJobDialog({ onSubmit, isHero = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [payload, setPayload] = useState('{ "task": "example", "data": "hello" }');
   const [maxAttempts, setMaxAttempts] = useState(3);
+  const [jobCount, setJobCount] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
@@ -22,8 +23,21 @@ export function AddJobDialog({ onSubmit }) {
         parsedPayload = payload;
       }
 
-      const result = await onSubmit(parsedPayload, maxAttempts);
-      setFeedback({ type: "success", message: `Job ${result.jobId.slice(0, 8)}… created` });
+      if (jobCount > 1) {
+        const results = await onSubmit(parsedPayload, jobCount, maxAttempts);
+        const successCount = results.filter(r => r.status === 'fulfilled').length;
+        setFeedback({ type: successCount === jobCount ? "success" : "error", message: `Successfully queued ${successCount}/${jobCount} jobs` });
+      } else {
+        const result = await onSubmit(parsedPayload, maxAttempts);
+        // Note: bulkAddJobs array or single addJob object difference needs handling, assuming onSubmit is always bulkAddJobs here since we passed it in Hero
+        // Wait, if it's bulkAddJobs, it returns Promise.allSettled array. Let's unify.
+        if (Array.isArray(result)) {
+           setFeedback({ type: "success", message: `Job ${result[0]?.value?.jobId?.slice(0, 8)}… created` });
+        } else {
+           setFeedback({ type: "success", message: `Job ${result.jobId?.slice(0, 8)}… created` });
+        }
+      }
+
       setTimeout(() => {
         setIsOpen(false);
         setFeedback(null);
@@ -37,18 +51,32 @@ export function AddJobDialog({ onSubmit }) {
 
   return (
     <>
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm transition-all hover:shadow-lg hover:shadow-primary/25 cursor-pointer"
-        id="add-job-button"
-      >
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 5v14" /><path d="M5 12h14" />
-        </svg>
-        Add Job
-      </motion.button>
+      {isHero ? (
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsOpen(true)}
+          className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-full font-semibold text-lg transition-all hover:shadow-[0_0_20px_rgba(167,139,250,0.4)] cursor-pointer"
+        >
+          Simulate Load
+          <svg className="w-5 h-5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+          </svg>
+        </motion.button>
+      ) : (
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setIsOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm transition-all hover:shadow-lg hover:shadow-primary/25 cursor-pointer"
+          id="add-job-button"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14" /><path d="M5 12h14" />
+          </svg>
+          Add Job
+        </motion.button>
+      )}
 
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
@@ -119,21 +147,47 @@ export function AddJobDialog({ onSubmit }) {
                     <div className="space-y-3">
                       <label
                         htmlFor="max-attempts-input"
-                        className="text-sm font-medium text-foreground"
+                        className="text-sm font-medium text-foreground flex items-center justify-between"
                       >
-                        Max Attempts
+                        <span>Max Attempts</span>
+                        <span className="text-muted-foreground">{maxAttempts}</span>
                       </label>
                       <input
                         id="max-attempts-input"
-                        type="number"
+                        type="range"
                         min={1}
                         max={10}
                         value={maxAttempts}
                         onChange={(e) =>
                           setMaxAttempts(parseInt(e.target.value, 10) || 1)
                         }
-                        className="w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-all shadow-sm"
+                        className="w-full accent-primary"
                       />
+                    </div>
+
+                    {/* Concurrent Jobs */}
+                    <div className="space-y-3">
+                      <label
+                        htmlFor="job-count-input"
+                        className="text-sm font-medium text-foreground flex items-center justify-between"
+                      >
+                        <span>Concurrent Jobs</span>
+                        <span className="text-primary font-bold">{jobCount}</span>
+                      </label>
+                      <input
+                        id="job-count-input"
+                        type="range"
+                        min={1}
+                        max={50}
+                        value={jobCount}
+                        onChange={(e) =>
+                          setJobCount(parseInt(e.target.value, 10) || 1)
+                        }
+                        className="w-full accent-primary"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Simulate bulk insertion to test queue concurrency.
+                      </p>
                     </div>
 
                     {/* Feedback */}
