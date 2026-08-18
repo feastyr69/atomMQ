@@ -168,6 +168,26 @@ const pollDelayedJobs = async () => {
   return readyJobIds.length;
 };
 
+const getDelayedCount = async () => {
+  return redisClient.zCard(KEYS.delayedQueue);
+};
+
+const getDeadLetterCount = async () => {
+  return redisClient.lLen(KEYS.deadLetterQueue);
+};
+
+const getPendingJobs = async () => {
+  return redisClient.lRange(KEYS.pendingQueue, 0, -1);
+};
+
+const getDelayedJobs = async () => {
+  return redisClient.zRange(KEYS.delayedQueue, 0, -1);
+};
+
+const getDeadLetterJobs = async () => {
+  return redisClient.lRange(KEYS.deadLetterQueue, 0, -1);
+};
+
 module.exports = {
   createJob,
   getJob,
@@ -176,6 +196,11 @@ module.exports = {
   getPendingCount,
   getProcessingCount,
   getProcessingJobs,
+  getPendingJobs,
+  getDelayedJobs,
+  getDeadLetterJobs,
+  getDelayedCount,
+  getDeadLetterCount,
   acquireLock,
   acknowledgeJob,
   incrementAttempts,
