@@ -92,11 +92,11 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
         <motion.div
           drag
           dragConstraints={constraintsRef}
-          className="relative flex items-center justify-between min-w-[1100px] w-full h-full p-8 md:px-16 pb-48 mx-auto"
+          className="relative flex items-center justify-between min-w-[750px] lg:min-w-[1000px] w-full h-full p-4 md:p-8 lg:px-16 pb-8 md:pb-16 mx-auto"
         >
 
         {/* SVG Connectors - Background Layer */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden hidden md:block z-0">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -177,10 +177,10 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
 
         {/* Node 1: Producer */}
         <div className="relative z-10 w-[15%] flex flex-col items-center">
-          <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-5 shadow-2xl text-center relative overflow-hidden group hover:border-white/30 transition-colors">
-            <div className="text-xs uppercase tracking-widest text-zinc-500 mb-4 font-bold">Client / Producer</div>
-            <div className="flex justify-center mb-4">
-              <Server className="w-10 h-10 text-white/50 group-hover:text-white transition-colors" />
+          <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-3 md:p-5 shadow-2xl text-center relative overflow-hidden group hover:border-white/30 transition-colors">
+            <div className="text-[10px] md:text-xs uppercase tracking-widest text-zinc-500 mb-3 md:mb-4 font-bold">Client / Producer</div>
+            <div className="flex justify-center mb-3 md:mb-4">
+              <Server className="w-8 h-8 md:w-10 md:h-10 text-white/50 group-hover:text-white transition-colors" />
             </div>
             <AddJobDialog onSubmit={bulkAddJobs} />
           </div>
@@ -188,30 +188,30 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
 
         {/* Node 2: Redis Hub */}
         <div className="relative z-10 w-[20%] flex flex-col items-center">
-          <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-6 shadow-[0_0_40px_rgba(0,100,255,0.05)] text-center relative overflow-hidden">
+          <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-4 md:p-6 shadow-[0_0_40px_rgba(0,100,255,0.05)] text-center relative overflow-hidden">
             {stats.processing > 0 && (
               <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 shadow-[0_0_20px_#3b82f6]" />
             )}
-            <div className="text-xs uppercase tracking-widest text-blue-400 mb-6 font-bold flex justify-center items-center gap-2">
-              <Database className="w-4 h-4" /> Redis Queue
+            <div className="text-[10px] md:text-xs uppercase tracking-widest text-blue-400 mb-4 md:mb-6 font-bold flex justify-center items-center gap-2">
+              <Database className="w-3 h-3 md:w-4 md:h-4" /> Redis Queue
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-black/50 p-3 rounded-lg border border-white/5">
-                <div className="text-3xl font-light text-white">{stats.pending}</div>
-                <div className="text-[10px] text-zinc-500 uppercase mt-1">Pending</div>
+            <div className="grid grid-cols-2 gap-2 md:gap-4">
+              <div className="bg-black/50 p-2 md:p-3 rounded-lg border border-white/5">
+                <div className="text-xl md:text-3xl font-light text-white">{stats.pending}</div>
+                <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase mt-1">Pending</div>
               </div>
-              <div className="bg-black/50 p-3 rounded-lg border border-white/5">
-                <div className="text-3xl font-light text-blue-400">{stats.processing}</div>
-                <div className="text-[10px] text-zinc-500 uppercase mt-1">Active</div>
+              <div className="bg-black/50 p-2 md:p-3 rounded-lg border border-white/5">
+                <div className="text-xl md:text-3xl font-light text-blue-400">{stats.processing}</div>
+                <div className="text-[9px] md:text-[10px] text-zinc-500 uppercase mt-1">Active</div>
               </div>
             </div>
 
-            <div className="flex gap-2 justify-center mt-4">
-              <div className="px-2 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] rounded-md font-mono">
+            <div className="flex gap-2 justify-center mt-3 md:mt-4">
+              <div className="px-2 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[9px] md:text-[10px] rounded-md font-mono">
                 DL: {stats.delayed}
               </div>
-              <div className="px-2 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] rounded-md font-mono">
+              <div className="px-2 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] md:text-[10px] rounded-md font-mono">
                 Dead: {stats.deadLetter}
               </div>
             </div>
@@ -219,7 +219,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
         </div>
 
         {/* Node 3 Column: Workers */}
-        <div className="relative z-10 w-[22%] flex flex-col gap-8">
+        <div className="relative z-10 w-[22%] flex flex-col gap-6 md:gap-8">
           {workers.map((worker) => {
             const isWorking = worker.state === "working";
             const isFailed = worker.state === "failed";
@@ -227,7 +227,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
             return (
               <div
                 key={worker.id}
-                className={`relative w-full h-56 rounded-xl border flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-300
+                className={`relative w-full aspect-square md:aspect-auto md:h-56 rounded-xl border flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-300
                   ${isWorking ? "border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.15)]" : ""}
                   ${isFailed ? "border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.15)]" : ""}
                   ${!isWorking && !isFailed ? "border-white/10 bg-[#0a0a0a]" : ""}
@@ -284,7 +284,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
       </div>
 
       {/* Embedded Job Feed (System Log) */}
-      <div className="absolute bottom-0 left-0 w-full h-40 border-t border-white/10 bg-black/60 backdrop-blur-xl p-6 flex flex-col z-30">
+      <div className="relative shrink-0 w-full h-40 border-t border-white/10 bg-black/60 backdrop-blur-xl p-4 md:p-6 flex flex-col z-30">
         <div className="flex items-center gap-2 mb-3 text-zinc-400 text-xs font-mono tracking-widest uppercase">
           <Terminal className="w-4 h-4" />
           Event Log // Terminal Output
