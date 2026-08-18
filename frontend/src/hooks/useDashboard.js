@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const WS_URL = "ws://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const WS_URL = API_URL.replace(/^http/, "ws");
 
 export function useDashboard() {
   const [stats, setStats] = useState({
@@ -57,7 +58,7 @@ export function useDashboard() {
   }, [connect]);
 
   const addJob = useCallback(async (payload, maxAttempts = 3) => {
-    const res = await fetch("http://localhost:3000/jobs", {
+    const res = await fetch(`${API_URL}/jobs`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ payload, max_attempts: maxAttempts }),
@@ -78,7 +79,7 @@ export function useDashboard() {
         : `${basePayload} (Bulk ${i + 1}/${count})`;
         
       promises.push(
-        fetch("http://localhost:3000/jobs", {
+        fetch(`${API_URL}/jobs`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ payload, max_attempts: maxAttempts }),
