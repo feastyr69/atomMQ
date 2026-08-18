@@ -27,29 +27,43 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
   useEffect(() => {
     const processing = stats.processing;
     const deadLetterIncreased = stats.deadLetter > prevStats.current.deadLetter;
-    
+    const delayedIncreased = stats.delayed > prevStats.current.delayed;
+    const hasFailure = deadLetterIncreased || delayedIncreased;
+
     setWorkers(prev => {
       let next = [...prev];
-      
-      // Handle crashes if deadLetter increases
-      if (deadLetterIncreased) {
+
+      // Handle crashes if a job fails (either dead letter or delayed retry)
+      if (hasFailure) {
         const failIdx = Math.floor(Math.random() * WORKER_COUNT);
         next[failIdx].state = "failed";
+        
+        // Revert fastly to create a quick flashing effect for the error
+        setTimeout(() => {
+          setWorkers(curr => {
+            const copy = [...curr];
+            if (copy[failIdx].state === "failed") {
+              copy[failIdx].state = "idle";
+              return copy;
+            }
+            return curr;
+          });
+        }, 800);
       }
 
       let assigned = 0;
       for (let i = 0; i < next.length; i++) {
-        if (next[i].state === "failed" && !deadLetterIncreased) {
-           next[i].state = "idle";
+        if (next[i].state === "failed" && !hasFailure) {
+          next[i].state = "idle";
         }
-        
+
         if (next[i].state !== "failed") {
-           if (assigned < processing) {
-             next[i].state = "working";
-             assigned++;
-           } else {
-             next[i].state = "idle";
-           }
+          if (assigned < processing) {
+            next[i].state = "working";
+            assigned++;
+          } else {
+            next[i].state = "idle";
+          }
         }
       }
       return next;
@@ -74,10 +88,10 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
 
       {/* Main Graph Area */}
       <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-between w-full h-full p-8 md:px-16 pb-48">
-        
+
         {/* SVG Connectors - Background Layer */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden hidden md:block z-0">
-          <svg className="w-full h-full" preserveAspectRatio="none">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.15)" />
@@ -86,38 +100,66 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="#60A5FA" />
               </marker>
             </defs>
-            
+
             {/* Producer to Queue */}
-            <path d="M 18% 45% L 35% 45%" stroke="rgba(255,255,255,0.15)" strokeWidth="2" markerEnd="url(#arrow)" fill="none" />
-            
+            <g>
+              <motion.path 
+                d="M 18 45 L 35 45" 
+                stroke="rgba(255,255,255,0.15)" 
+                strokeWidth="2" 
+                strokeDasharray="2 2"
+                vectorEffect="non-scaling-stroke"
+                markerEnd="url(#arrow)" 
+                fill="none" 
+              />
+              <motion.circle
+                cx="18"
+                cy="45"
+                r="0.6"
+                fill="#fff"
+                initial={{ offsetDistance: "0%" }}
+                animate={{ offsetDistance: "100%" }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                style={{ offsetPath: `path('M 18 45 L 35 45')` }}
+                className="shadow-[0_0_8px_#fff]"
+              />
+            </g>
+
             {/* Queue to Workers (Assuming 3 workers at specific Y percentages) */}
             {workers.map((w, i) => {
               // Y positions for 3 workers: top, middle, bottom
               const yPositions = [15, 45, 75];
               const targetY = yPositions[i];
               const isWorking = w.state === "working";
-              
+
               return (
                 <g key={`flow-${i}`}>
-                  {/* The actual line */}
+                  {/* The actual line, now dashed */}
                   <motion.path
-                    d={`M 55% 45% C 65% 45%, 65% ${targetY}%, 75% ${targetY}%`}
+                    d={`M 55 45 C 65 45, 65 ${targetY}, 75 ${targetY}`}
                     fill="none"
                     stroke={isWorking ? "#60A5FA" : "rgba(255,255,255,0.15)"}
                     strokeWidth={isWorking ? 2 : 2}
+                    strokeDasharray="2 2"
+                    vectorEffect="non-scaling-stroke"
+                    initial={{ strokeDashoffset: 0 }}
+                    animate={isWorking ? { strokeDashoffset: -10 } : { strokeDashoffset: 0 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     markerEnd={isWorking ? "url(#arrow-active)" : "url(#arrow)"}
                     className="transition-colors duration-500"
                   />
-                  
+
                   {/* Flowing packet animation if working */}
                   {isWorking && (
                     <motion.circle
-                      r="4"
+                      cx="55"
+                      cy="45"
+                      r="0.8"
                       fill="#fff"
                       initial={{ offsetDistance: "0%" }}
                       animate={{ offsetDistance: "100%" }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      style={{ offsetPath: `path('M 55% 45% C 65% 45%, 65% ${targetY}%, 75% ${targetY}%')` }}
+                      style={{ offsetPath: `path('M 55 45 C 65 45, 65 ${targetY}, 75 ${targetY}')` }}
                       className="shadow-[0_0_10px_#fff]"
                     />
                   )}
@@ -129,45 +171,45 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
 
         {/* Node 1: Producer */}
         <div className="relative z-10 w-full md:w-[15%] flex flex-col items-center">
-           <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-5 shadow-2xl text-center relative overflow-hidden group hover:border-white/30 transition-colors">
-              <div className="text-xs uppercase tracking-widest text-zinc-500 mb-4 font-bold">Client / Producer</div>
-              <div className="flex justify-center mb-4">
-                 <Server className="w-10 h-10 text-white/50 group-hover:text-white transition-colors" />
-              </div>
-              <AddJobDialog onSubmit={bulkAddJobs} />
-           </div>
+          <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-5 shadow-2xl text-center relative overflow-hidden group hover:border-white/30 transition-colors">
+            <div className="text-xs uppercase tracking-widest text-zinc-500 mb-4 font-bold">Client / Producer</div>
+            <div className="flex justify-center mb-4">
+              <Server className="w-10 h-10 text-white/50 group-hover:text-white transition-colors" />
+            </div>
+            <AddJobDialog onSubmit={bulkAddJobs} />
+          </div>
         </div>
 
         {/* Node 2: Redis Hub */}
         <div className="relative z-10 w-full md:w-[20%] flex flex-col items-center mt-12 md:mt-0">
-           <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-6 shadow-[0_0_40px_rgba(0,100,255,0.05)] text-center relative overflow-hidden">
-              {stats.processing > 0 && (
-                <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 shadow-[0_0_20px_#3b82f6]" />
-              )}
-              <div className="text-xs uppercase tracking-widest text-blue-400 mb-6 font-bold flex justify-center items-center gap-2">
-                 <Database className="w-4 h-4" /> Redis Queue
+          <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-6 shadow-[0_0_40px_rgba(0,100,255,0.05)] text-center relative overflow-hidden">
+            {stats.processing > 0 && (
+              <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 shadow-[0_0_20px_#3b82f6]" />
+            )}
+            <div className="text-xs uppercase tracking-widest text-blue-400 mb-6 font-bold flex justify-center items-center gap-2">
+              <Database className="w-4 h-4" /> Redis Queue
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-black/50 p-3 rounded-lg border border-white/5">
+                <div className="text-3xl font-light text-white">{stats.pending}</div>
+                <div className="text-[10px] text-zinc-500 uppercase mt-1">Pending</div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="bg-black/50 p-3 rounded-lg border border-white/5">
-                    <div className="text-3xl font-light text-white">{stats.pending}</div>
-                    <div className="text-[10px] text-zinc-500 uppercase mt-1">Pending</div>
-                 </div>
-                 <div className="bg-black/50 p-3 rounded-lg border border-white/5">
-                    <div className="text-3xl font-light text-blue-400">{stats.processing}</div>
-                    <div className="text-[10px] text-zinc-500 uppercase mt-1">Active</div>
-                 </div>
+              <div className="bg-black/50 p-3 rounded-lg border border-white/5">
+                <div className="text-3xl font-light text-blue-400">{stats.processing}</div>
+                <div className="text-[10px] text-zinc-500 uppercase mt-1">Active</div>
               </div>
-              
-              <div className="flex gap-2 justify-center mt-4">
-                 <div className="px-2 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] rounded-md font-mono">
-                   DL: {stats.delayed}
-                 </div>
-                 <div className="px-2 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] rounded-md font-mono">
-                   Dead: {stats.deadLetter}
-                 </div>
+            </div>
+
+            <div className="flex gap-2 justify-center mt-4">
+              <div className="px-2 py-1 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] rounded-md font-mono">
+                DL: {stats.delayed}
               </div>
-           </div>
+              <div className="px-2 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] rounded-md font-mono">
+                Dead: {stats.deadLetter}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Node 3 Column: Workers */}
@@ -175,7 +217,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
           {workers.map((worker) => {
             const isWorking = worker.state === "working";
             const isFailed = worker.state === "failed";
-            
+
             return (
               <div
                 key={worker.id}
@@ -186,14 +228,15 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                 `}
               >
                 {/* Big Square Cat Avatar (No Scanlines) */}
-                <img 
-                  src={GIFS[worker.state]} 
-                  alt={worker.state} 
+                <img
+                  src={GIFS[worker.state]}
+                  alt={worker.state}
                   className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300
+                    ${worker.state === "idle" ? "object-top" : "object-center"}
                     ${isWorking ? "opacity-90 mix-blend-lighten" : "opacity-60 grayscale-[50%]"}
                   `}
                 />
-                
+
                 {/* Worker Header Info */}
                 <div className="relative z-10 p-3 bg-gradient-to-b from-black/90 via-black/50 to-transparent flex justify-between items-start">
                   <div className="flex flex-col">
@@ -205,24 +248,24 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                     {worker.state}
                   </span>
                 </div>
-                
+
                 {/* Status Terminal Overlay at Bottom */}
                 <div className="relative z-10 p-3 bg-gradient-to-t from-black/90 via-black/80 to-transparent mt-auto">
                   <div className="w-full bg-black/80 rounded border border-white/10 p-2 flex flex-col font-mono text-[10px] shadow-inner">
                     {isWorking ? (
                       <>
-                         <span className="text-blue-300/90">{`> RECV job_payload`}</span>
-                         <span className="text-white/60 animate-pulse">{`> processing...`}</span>
+                        <span className="text-blue-300/90">{`> RECV job_payload`}</span>
+                        <span className="text-white/60 animate-pulse">{`> processing...`}</span>
                       </>
                     ) : isFailed ? (
                       <>
-                         <span className="text-red-400/90">{`> FATAL_EXCEPTION`}</span>
-                         <span className="text-red-400/60">{`> core dumped`}</span>
+                        <span className="text-red-400/90">{`> FATAL_EXCEPTION`}</span>
+                        <span className="text-red-400/60">{`> core dumped`}</span>
                       </>
                     ) : (
                       <>
-                         <span className="text-zinc-500">{`> idled`}</span>
-                         <span className="text-zinc-600">{`> waiting on queue`}</span>
+                        <span className="text-zinc-500">{`> idled`}</span>
+                        <span className="text-zinc-600">{`> waiting on queue`}</span>
                       </>
                     )}
                   </div>
@@ -239,7 +282,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
           <Terminal className="w-4 h-4" />
           Event Log // Terminal Output
         </div>
-        
+
         <div className="flex-1 overflow-y-auto space-y-2 pr-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           <AnimatePresence>
             {jobs.length === 0 && (
@@ -248,7 +291,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
             {jobs.slice(0, 10).map((job) => {
               const config = statusConfig[job.status] || statusConfig.pending;
               return (
-                <motion.div 
+                <motion.div
                   key={job.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -258,8 +301,8 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                   <span className="text-zinc-500 w-16 shrink-0">{formatTimestamp(job.updated_at).split(" ")[1]}</span>
                   <span className="text-zinc-300 w-24 shrink-0 truncate">{truncateId(job.id)}</span>
                   <span className={`w-20 shrink-0 ${config.color.replace('border-', 'text-').replace('/20', '')} flex items-center gap-1.5`}>
-                     <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
-                     {config.label}
+                    <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+                    {config.label}
                   </span>
                   <span className="text-zinc-500 flex-1 truncate">
                     {typeof job.payload === "object" ? JSON.stringify(job.payload) : String(job.payload)}
