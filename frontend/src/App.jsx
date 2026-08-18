@@ -5,6 +5,8 @@ import { SystemGraph } from "./components/SystemGraph";
 import { ConnectionStatus } from "./components/ConnectionStatus";
 import { Hero } from "./components/Hero";
 
+import { ArchitectureSection } from "./components/ArchitectureSection";
+
 export default function App() {
   const { stats, jobs, connected, bulkAddJobs } = useDashboard();
   const [mounted, setMounted] = useState(false);
@@ -57,6 +59,9 @@ export default function App() {
       {/* Main Content Area */}
       <main className="relative flex-1 w-full max-w-7xl mx-auto px-6 py-12">
         <SystemGraph stats={stats} jobs={jobs} bulkAddJobs={bulkAddJobs} />
+        
+        {/* Architecture Section */}
+        <ArchitectureSection />
       </main>
 
       {/* Footer */}
