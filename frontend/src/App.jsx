@@ -54,12 +54,12 @@ export default function App() {
       </header>
 
       {/* Hero Section */}
-      <Hero bulkAddJobs={bulkAddJobs} />
+      <Hero />
 
       {/* Main Content Area */}
       <main className="relative flex-1 w-full max-w-7xl mx-auto px-6 py-12 space-y-8">
         <StatsCards stats={stats} />
-        <QueueVisualizer stats={stats} />
+        <QueueVisualizer stats={stats} bulkAddJobs={bulkAddJobs} />
         <JobTable jobs={jobs} />
       </main>
 
