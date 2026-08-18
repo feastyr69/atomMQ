@@ -22,6 +22,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
   );
 
   const prevStats = useRef(stats);
+  const constraintsRef = useRef(null);
 
   // Sync worker states with real stats
   useEffect(() => {
@@ -87,7 +88,12 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
       </div>
 
       {/* Main Graph Area */}
-      <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-between w-full h-full p-8 md:px-16 pb-48">
+      <div ref={constraintsRef} className="relative z-10 flex-1 w-full h-full overflow-hidden cursor-grab active:cursor-grabbing">
+        <motion.div
+          drag
+          dragConstraints={constraintsRef}
+          className="relative flex items-center justify-between min-w-[1100px] w-full h-full p-8 md:px-16 pb-48 mx-auto"
+        >
 
         {/* SVG Connectors - Background Layer */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden hidden md:block z-0">
@@ -170,7 +176,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
         </div>
 
         {/* Node 1: Producer */}
-        <div className="relative z-10 w-full md:w-[15%] flex flex-col items-center">
+        <div className="relative z-10 w-[15%] flex flex-col items-center">
           <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-5 shadow-2xl text-center relative overflow-hidden group hover:border-white/30 transition-colors">
             <div className="text-xs uppercase tracking-widest text-zinc-500 mb-4 font-bold">Client / Producer</div>
             <div className="flex justify-center mb-4">
@@ -181,7 +187,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
         </div>
 
         {/* Node 2: Redis Hub */}
-        <div className="relative z-10 w-full md:w-[20%] flex flex-col items-center mt-12 md:mt-0">
+        <div className="relative z-10 w-[20%] flex flex-col items-center">
           <div className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl p-6 shadow-[0_0_40px_rgba(0,100,255,0.05)] text-center relative overflow-hidden">
             {stats.processing > 0 && (
               <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 shadow-[0_0_20px_#3b82f6]" />
@@ -213,7 +219,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
         </div>
 
         {/* Node 3 Column: Workers */}
-        <div className="relative z-10 w-full md:w-[22%] flex flex-col gap-8 mt-12 md:mt-0">
+        <div className="relative z-10 w-[22%] flex flex-col gap-8">
           {workers.map((worker) => {
             const isWorking = worker.state === "working";
             const isFailed = worker.state === "failed";
@@ -221,7 +227,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
             return (
               <div
                 key={worker.id}
-                className={`relative w-full aspect-square md:aspect-auto md:h-56 rounded-xl border flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-300
+                className={`relative w-full h-56 rounded-xl border flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-300
                   ${isWorking ? "border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.15)]" : ""}
                   ${isFailed ? "border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.15)]" : ""}
                   ${!isWorking && !isFailed ? "border-white/10 bg-[#0a0a0a]" : ""}
@@ -274,6 +280,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
             );
           })}
         </div>
+        </motion.div>
       </div>
 
       {/* Embedded Job Feed (System Log) */}
