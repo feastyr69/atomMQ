@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDashboard } from "./hooks/useDashboard";
-import { StatsCards } from "./components/StatsCards";
-import { QueueVisualizer } from "./components/QueueVisualizer";
-import { JobTable } from "./components/JobTable";
+import { SystemGraph } from "./components/SystemGraph";
 import { ConnectionStatus } from "./components/ConnectionStatus";
 import { Hero } from "./components/Hero";
 
@@ -57,10 +55,8 @@ export default function App() {
       <Hero />
 
       {/* Main Content Area */}
-      <main className="relative flex-1 w-full max-w-7xl mx-auto px-6 py-12 space-y-8">
-        <StatsCards stats={stats} />
-        <QueueVisualizer stats={stats} bulkAddJobs={bulkAddJobs} />
-        <JobTable jobs={jobs} />
+      <main className="relative flex-1 w-full max-w-7xl mx-auto px-6 py-12">
+        <SystemGraph stats={stats} jobs={jobs} bulkAddJobs={bulkAddJobs} />
       </main>
 
       {/* Footer */}
