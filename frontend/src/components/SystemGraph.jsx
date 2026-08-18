@@ -130,7 +130,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
       </div>
 
       {/* Main Graph Area */}
-      <div className="relative z-10 flex-1 w-full h-full overflow-x-auto overflow-y-hidden touch-pan-x custom-scrollbar">
+      <div className="relative z-10 flex-1 w-full h-full overflow-x-auto overflow-y-hidden custom-scrollbar">
         <div
           className="relative flex items-center justify-between min-w-[750px] lg:min-w-[1000px] w-full h-full p-4 md:p-8 lg:px-16 pb-8 md:pb-16 mx-auto"
         >
