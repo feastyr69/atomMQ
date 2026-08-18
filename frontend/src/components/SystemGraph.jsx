@@ -31,17 +31,17 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
     const hasFailure = deadLetterIncreased || delayedIncreased;
 
     setWorkers(prev => {
-      let next = [...prev];
+      let next = prev.map(w => ({ ...w }));
 
       // Handle crashes if a job fails (either dead letter or delayed retry)
       if (hasFailure) {
         const failIdx = Math.floor(Math.random() * WORKER_COUNT);
         next[failIdx].state = "failed";
-        
+
         // Revert fastly to create a quick flashing effect for the error
         setTimeout(() => {
           setWorkers(curr => {
-            const copy = [...curr];
+            const copy = curr.map(w => ({ ...w }));
             if (copy[failIdx].state === "failed") {
               copy[failIdx].state = "idle";
               return copy;
@@ -75,8 +75,8 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
   return (
     <div className="relative w-full min-h-[850px] bg-[#010204]/90 backdrop-blur-3xl border border-white/5 rounded-3xl overflow-hidden shadow-2xl flex flex-col mt-4">
       {/* Background Grid & FX */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] opacity-20 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,100,255,0.05)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,100,255,0.03)_0%,transparent_70%)] pointer-events-none" />
 
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between p-8 border-b border-white/5">
@@ -103,14 +103,14 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
 
             {/* Producer to Queue */}
             <g>
-              <motion.path 
-                d="M 18 45 L 35 45" 
-                stroke="rgba(255,255,255,0.15)" 
-                strokeWidth="2" 
+              <motion.path
+                d="M 18 45 L 35 45"
+                stroke="rgba(255,255,255,0.15)"
+                strokeWidth="2"
                 strokeDasharray="2 2"
                 vectorEffect="non-scaling-stroke"
-                markerEnd="url(#arrow)" 
-                fill="none" 
+                markerEnd="url(#arrow)"
+                fill="none"
               />
               <motion.circle
                 cx="18"
@@ -233,7 +233,7 @@ export function SystemGraph({ stats, jobs, bulkAddJobs }) {
                   alt={worker.state}
                   className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300
                     ${worker.state === "idle" ? "object-top" : "object-center"}
-                    ${isWorking ? "opacity-90 mix-blend-lighten" : "opacity-60 grayscale-[50%]"}
+                    ${isWorking ? "opacity-90 mix-blend-lighten" : isFailed ? "opacity-100 mix-blend-normal" : "opacity-60 grayscale-[50%]"}
                   `}
                 />
 

@@ -7,9 +7,9 @@ export function Hero() {
   const { scrollYProgress } = useScroll();
 
   return (
-    <section className="relative w-full h-[90vh] bg-[#010204] overflow-hidden flex items-center justify-center border-b border-white/10">
+    <section className="relative w-full h-[90vh] bg-transparent flex items-center justify-center border-b border-white/10">
       {/* 3D Canvas */}
-      <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
+      <div className="fixed inset-0 w-full h-screen z-0 pointer-events-none">
         <Canvas camera={{ position: [0, 0, 16], fov: 45 }}>
           <Scene scrollYProgress={scrollYProgress} />
         </Canvas>
