@@ -26,7 +26,7 @@ A robust, distributed producer/consumer job queue built with Node.js, Express, a
 
 ## Prerequisites
 
-- Node.js (16+ recommended)
+- Node.js (18+ recommended)
 - Redis instance (local or remote)
 - Git (optional)
 
@@ -59,6 +59,27 @@ PORT=3000   # optional
 
 ```bash
 npm start
+```
+
+## Benchmark
+
+With Redis and the app services running, submit a batch of jobs and measure end-to-end completion:
+
+```bash
+npm run benchmark -- --jobs 100 --concurrency 10
+```
+
+The script submits jobs through the HTTP API, polls their status until they complete or fail, and reports submission time, overall throughput, terminal status counts, and p50/p95/p99 completion latency. Benchmark payloads include a run ID and remain in Redis for inspection. Failed jobs count as terminal; jobs still pending when the timeout expires are reported as timed out and cause a nonzero exit code.
+
+Options:
+
+```text
+--url <url>                API base URL (default: http://localhost:$PORT, or port 3000)
+--jobs <count>             Number of jobs to submit (default: 100)
+--concurrency <count>      Concurrent submissions and status checks (default: 10)
+--poll-interval <ms>       Delay between status checks (default: 1000)
+--timeout <ms>             Maximum completion wait (default: 600000)
+--help                     Show usage
 ```
 
 ---

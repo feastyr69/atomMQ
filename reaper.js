@@ -7,8 +7,9 @@ const {
 } = require("./redis/schema/jobQueue.js");
 
 const REAP_INTERVAL_MS = 40 * 1000;
+const DELAYED_POLL_INTERVAL_MS = 1000;
 
-const reap = async () => {
+const reapProcessingJobs = async () => {
   const processingJobs = await getProcessingJobs();
 
   if (processingJobs.length === 0) {
@@ -25,26 +26,39 @@ const reap = async () => {
       }
     }
   }
+};
 
+const promoteDelayedJobs = async () => {
   const promoted = await pollDelayedJobs();
   if (promoted > 0) {
     console.log(`[reaper] promoted ${promoted} delayed jobs to pending`);
   }
 };
 
+const runPeriodically = (task, intervalMs, label) => {
+  const run = async () => {
+    try {
+      await task();
+    } catch (err) {
+      console.error(`[reaper] ${label} error:`, err.message);
+    } finally {
+      setTimeout(run, intervalMs);
+    }
+  };
+
+  run();
+};
+
 const run = async () => {
   await redisClient.connect();
-  console.log("[reaper] connected to Redis, scanning every 40s...");
+  console.log("[reaper] connected to Redis");
 
-  await reap();
+  await Promise.all([reapProcessingJobs(), promoteDelayedJobs()]);
 
-  setInterval(async () => {
-    try {
-      await reap();
-    } catch (err) {
-      console.error("[reaper] error:", err.message);
-    }
-  }, REAP_INTERVAL_MS);
+  console.log(`[reaper] checking processing locks every ${REAP_INTERVAL_MS / 1000}s`);
+  console.log(`[reaper] checking delayed jobs every ${DELAYED_POLL_INTERVAL_MS / 1000}s`);
+  runPeriodically(reapProcessingJobs, REAP_INTERVAL_MS, "processing recovery");
+  runPeriodically(promoteDelayedJobs, DELAYED_POLL_INTERVAL_MS, "delayed-job promotion");
 };
 
 run().catch((err) => {
