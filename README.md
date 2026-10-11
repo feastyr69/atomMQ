@@ -78,6 +78,35 @@ npm run benchmark -- --jobs 100 --concurrency 10 --workers 3
 
 The script submits jobs through the HTTP API, polls their status until they complete or fail, and reports submission time, overall throughput, terminal status counts, and p50/p95/p99 completion latency. Benchmark payloads include a run ID and remain in Redis for inspection. Failed jobs count as terminal; jobs still pending when the timeout expires are reported as timed out and cause a nonzero exit code.
 
+### Sample benchmark run
+
+This run used the benchmark defaults and the current worker simulation settings:
+
+| Setting | Value |
+| --- | ---: |
+| Jobs | 100 |
+| Submission and polling concurrency | 10 |
+| Workers | 3 |
+| Worker processing delay | 2–3 seconds per attempt |
+| Simulated failure chance | 0% |
+| Status poll interval | 1 second |
+| Completion timeout | 10 minutes |
+
+| Result | Value |
+| --- | ---: |
+| Run ID | `a7ed0884-11fb-4d9f-b451-ebe6c8299099` |
+| Submission time | 0.124 seconds |
+| Total time | 36.686 seconds |
+| Throughput | 2.73 jobs/second |
+| Completed | 100 |
+| Failed | 0 |
+| Timed out | 0 |
+| Completion latency p50 | 19.431 seconds |
+| Completion latency p95 | 34.572 seconds |
+| Completion latency p99 | 34.599 seconds |
+
+The configuration reflects the benchmark defaults and the worker failure setting at the time of this run. Throughput includes all terminal jobs and is measured over the full run duration.
+
 Options:
 
 ```text

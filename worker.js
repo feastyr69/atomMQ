@@ -17,7 +17,7 @@ const simulateWork = (jobId, payload) => {
     const delayMs = 2000 + Math.random() * 1000;
 
     setTimeout(() => {
-      if (Math.random() < 0.2) {           //20% chance of failure
+      if (Math.random() < 0.0) {           //20% chance of failure
         reject(new Error(`Simulated failure for job ${jobId}`));
       } else {
         resolve();
