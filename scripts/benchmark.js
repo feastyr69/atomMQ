@@ -1,14 +1,22 @@
 #!/usr/bin/env node
 
+const { spawn } = require("node:child_process");
 const { randomUUID } = require("node:crypto");
+const path = require("node:path");
 
 const DEFAULTS = {
   url: process.env.ATOMMQ_URL || `http://localhost:${process.env.PORT || 3000}`,
   jobs: 100,
   concurrency: 10,
+  workers: 3,
   pollInterval: 1000,
   timeout: 10 * 60 * 1000,
 };
+
+const WORKER_STARTUP_TIMEOUT_MS = 30 * 1000;
+const WORKER_STOP_TIMEOUT_MS = 2 * 1000;
+const workerProcesses = [];
+let stopWorkersPromise;
 
 const HELP = `AtomMQ end-to-end benchmark
 
@@ -18,6 +26,7 @@ Options:
   --url <url>                API base URL (default: ${DEFAULTS.url})
   --jobs <count>             Jobs to submit (default: ${DEFAULTS.jobs})
   --concurrency <count>      Concurrent submissions and status checks (default: ${DEFAULTS.concurrency})
+  --workers <count>          Worker processes to start (default: ${DEFAULTS.workers})
   --poll-interval <ms>       Delay between status checks (default: ${DEFAULTS.pollInterval})
   --timeout <ms>             Maximum completion wait (default: ${DEFAULTS.timeout})
   --help                     Show this help
@@ -29,6 +38,7 @@ function parseArgs(args) {
     "--url": "url",
     "--jobs": "jobs",
     "--concurrency": "concurrency",
+    "--workers": "workers",
     "--poll-interval": "pollInterval",
     "--timeout": "timeout",
   };
@@ -91,6 +101,94 @@ function percentile(values, fraction) {
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function waitForWorkerExit(child, timeoutMs) {
+  if (child.exitCode !== null || child.signalCode !== null) {
+    return Promise.resolve(true);
+  }
+
+  return new Promise((resolve) => {
+    const finish = (exited) => {
+      clearTimeout(timer);
+      child.removeListener("exit", onExit);
+      resolve(exited);
+    };
+    const onExit = () => finish(true);
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    child.once("exit", onExit);
+  });
+}
+
+async function stopWorker(child) {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+
+  child.kill("SIGTERM");
+  if (await waitForWorkerExit(child, WORKER_STOP_TIMEOUT_MS)) return;
+
+  console.error(`[benchmark] worker ${child.pid} did not stop; sending SIGKILL`);
+  child.kill("SIGKILL");
+  await waitForWorkerExit(child, WORKER_STOP_TIMEOUT_MS);
+}
+
+function stopWorkers() {
+  if (!stopWorkersPromise) {
+    stopWorkersPromise = Promise.all(workerProcesses.map(stopWorker));
+  }
+  return stopWorkersPromise;
+}
+
+function waitForWorkerReady(child, index) {
+  return new Promise((resolve, reject) => {
+    let outputBuffer = "";
+    let settled = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      child.removeListener("exit", onExit);
+      child.removeListener("error", onError);
+      error ? reject(error) : resolve();
+    };
+    const onExit = (code, signal) => {
+      finish(new Error(`Worker ${index} exited before connecting to Redis (code ${code ?? "none"}, signal ${signal ?? "none"})`));
+    };
+    const onError = (error) => finish(new Error(`Could not start worker ${index}: ${error.message}`));
+    const timer = setTimeout(() => {
+      finish(new Error(`Worker ${index} did not connect to Redis within ${WORKER_STARTUP_TIMEOUT_MS / 1000}s`));
+    }, WORKER_STARTUP_TIMEOUT_MS);
+
+    child.once("exit", onExit);
+    child.once("error", onError);
+    child.stdout.on("data", (chunk) => {
+      const output = chunk.toString();
+      process.stdout.write(`[worker ${index}] ${output}`);
+      outputBuffer = (outputBuffer + output).slice(-2048);
+      if (outputBuffer.includes("connected to Redis")) finish();
+    });
+    child.stderr.on("data", (chunk) => {
+      process.stderr.write(`[worker ${index}] ${chunk}`);
+    });
+  });
+}
+
+async function startWorkers(count) {
+  const workerPath = path.join(__dirname, "..", "worker.js");
+  const readinessChecks = [];
+
+  for (let index = 1; index <= count; index += 1) {
+    console.log(`[benchmark] starting worker ${index}/${count}`);
+    const child = spawn(process.execPath, [workerPath], {
+      cwd: path.join(__dirname, ".."),
+      env: process.env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    workerProcesses.push(child);
+    readinessChecks.push(waitForWorkerReady(child, index));
+  }
+
+  await Promise.all(readinessChecks);
+  console.log(`[benchmark] ${count} worker(s) connected to Redis`);
+}
 
 async function run(options) {
   const runId = randomUUID();
@@ -174,17 +272,31 @@ async function run(options) {
 }
 
 async function main() {
+  let options;
   try {
-    const options = parseArgs(process.argv.slice(2));
+    options = parseArgs(process.argv.slice(2));
     if (options.help) {
       console.log(HELP);
       return;
     }
+
+    process.once("SIGINT", () => {
+      console.error("\n[benchmark] interrupted; stopping launched workers");
+      stopWorkers().finally(() => process.exit(130));
+    });
+    process.once("SIGTERM", () => {
+      console.error("\n[benchmark] stopping launched workers");
+      stopWorkers().finally(() => process.exit(143));
+    });
+
+    await startWorkers(options.workers);
     await run(options);
   } catch (error) {
     console.error(`Benchmark failed: ${error.message}`);
     console.error("Run with --help for usage.");
     process.exitCode = 1;
+  } finally {
+    await stopWorkers();
   }
 }
 

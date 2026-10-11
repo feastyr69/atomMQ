@@ -63,10 +63,17 @@ npm start
 
 ## Benchmark
 
-With Redis and the app services running, submit a batch of jobs and measure end-to-end completion:
+Start Redis in Docker, then start the API and reaper in separate terminals:
 
 ```bash
-npm run benchmark -- --jobs 100 --concurrency 10
+npm run dev
+npm run reaper
+```
+
+The benchmark command starts three workers by default, waits for them to connect to Redis, submits jobs through the HTTP API, and stops only the workers it launched when the run ends. Do not use `npm start` for this flow because it also starts workers.
+
+```bash
+npm run benchmark -- --jobs 100 --concurrency 10 --workers 3
 ```
 
 The script submits jobs through the HTTP API, polls their status until they complete or fail, and reports submission time, overall throughput, terminal status counts, and p50/p95/p99 completion latency. Benchmark payloads include a run ID and remain in Redis for inspection. Failed jobs count as terminal; jobs still pending when the timeout expires are reported as timed out and cause a nonzero exit code.
@@ -77,6 +84,7 @@ Options:
 --url <url>                API base URL (default: http://localhost:$PORT, or port 3000)
 --jobs <count>             Number of jobs to submit (default: 100)
 --concurrency <count>      Concurrent submissions and status checks (default: 10)
+--workers <count>          Worker processes to start (default: 3)
 --poll-interval <ms>       Delay between status checks (default: 1000)
 --timeout <ms>             Maximum completion wait (default: 600000)
 --help                     Show usage
