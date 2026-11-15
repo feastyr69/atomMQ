@@ -179,7 +179,7 @@ async function startWorkers(count) {
     console.log(`[benchmark] starting worker ${index}/${count}`);
     const child = spawn(process.execPath, [workerPath], {
       cwd: path.join(__dirname, ".."),
-      env: process.env,
+      env: { ...process.env, ATOMMQ_WORKER_MODE: "benchmark" },
       stdio: ["ignore", "pipe", "pipe"],
     });
     workerProcesses.push(child);

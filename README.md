@@ -70,7 +70,9 @@ npm run dev
 npm run reaper
 ```
 
-The benchmark command starts three workers by default, waits for them to connect to Redis, submits jobs through the HTTP API, and stops only the workers it launched when the run ends. Do not use `npm start` for this flow because it also starts workers.
+Workers default to `simulation` mode. This mode waits 2–3 seconds per job and has a 20% chance of simulated failure, so it can demonstrate retries and dead-letter handling. Set `ATOMMQ_WORKER_MODE=benchmark` to run a worker without artificial work or simulated failures.
+
+The benchmark command starts three workers in `benchmark` mode by default, waits for them to connect to Redis, submits jobs through the HTTP API, and stops only the workers it launched when the run ends. For an isolated result, do not run other workers alongside it. Do not use `npm start` for this flow because it also starts workers.
 
 ```bash
 npm run benchmark -- --jobs 100 --concurrency 10 --workers 3
@@ -78,9 +80,9 @@ npm run benchmark -- --jobs 100 --concurrency 10 --workers 3
 
 The script submits jobs through the HTTP API, polls their status until they complete or fail, and reports submission time, overall throughput, terminal status counts, and p50/p95/p99 completion latency. Benchmark payloads include a run ID and remain in Redis for inspection. Failed jobs count as terminal; jobs still pending when the timeout expires are reported as timed out and cause a nonzero exit code.
 
-### Sample benchmark run
+### Previous simulated-work sample
 
-This run used the benchmark defaults and the current worker simulation settings:
+This historical run used the benchmark defaults with a 2–3 second worker delay. It is a simulated-work result, not a pure performance baseline:
 
 | Setting | Value |
 | --- | ---: |
@@ -88,7 +90,7 @@ This run used the benchmark defaults and the current worker simulation settings:
 | Submission and polling concurrency | 10 |
 | Workers | 3 |
 | Worker processing delay | 2–3 seconds per attempt |
-| Simulated failure chance | 0% |
+| Simulated failure chance | 0% at the time of this run |
 | Status poll interval | 1 second |
 | Completion timeout | 10 minutes |
 
@@ -105,7 +107,7 @@ This run used the benchmark defaults and the current worker simulation settings:
 | Completion latency p95 | 34.572 seconds |
 | Completion latency p99 | 34.599 seconds |
 
-The configuration reflects the benchmark defaults and the worker failure setting at the time of this run. Throughput includes all terminal jobs and is measured over the full run duration.
+Throughput includes all terminal jobs and is measured over the full run duration.
 
 Options:
 

@@ -11,25 +11,26 @@ const {
 } = require("./redis/schema/jobQueue.js");
 
 const POLL_TIMEOUT = 5;
+const WORKER_MODE = process.env.ATOMMQ_WORKER_MODE || "simulation";
+const logJobActivity = WORKER_MODE !== "benchmark";
 
-const simulateWork = (jobId, payload) => {
-  return new Promise((resolve, reject) => {
-    const delayMs = 2000 + Math.random() * 1000;
+const performWork = async (jobId, payload) => {
+  if (WORKER_MODE === "benchmark") return;
 
-    setTimeout(() => {
-      if (Math.random() < 0.0) {           //20% chance of failure
-        reject(new Error(`Simulated failure for job ${jobId}`));
-      } else {
-        resolve();
-      }
-    }, delayMs);
-  });
+  const delayMs = 2000 + Math.random() * 1000;
+  await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+  if (Math.random() < 0.2) {
+    throw new Error(`Simulated failure for job ${jobId}`);
+  }
 };
 
 const processJob = async (jobId) => {
   const locked = await acquireLock(jobId);
   if (!locked) {
-    console.log(`[worker] job ${jobId} is locked by another worker, skipping`);
+    if (logJobActivity) {
+      console.log(`[worker] job ${jobId} is locked by another worker, skipping`);
+    }
     return;
   }
 
@@ -37,12 +38,12 @@ const processJob = async (jobId) => {
   await incrementAttempts(jobId);
 
   const job = await getJob(jobId);
-  console.log(`[worker] processing job ${jobId}`, job.payload);
+  if (logJobActivity) console.log(`[worker] processing job ${jobId}`, job.payload);
 
   try {
-    await simulateWork(jobId, job.payload);
+    await performWork(jobId, job.payload);
     await acknowledgeJob(jobId);
-    console.log(`[worker] job ${jobId} completed successfully`);
+    if (logJobActivity) console.log(`[worker] job ${jobId} completed successfully`);
   } catch (err) {
     console.error(`[worker] job ${jobId} failed: ${err.message}`);
 
@@ -60,8 +61,12 @@ const processJob = async (jobId) => {
 };
 
 const run = async () => {
+  if (!["simulation", "benchmark"].includes(WORKER_MODE)) {
+    throw new Error(`Invalid ATOMMQ_WORKER_MODE "${WORKER_MODE}"; use "simulation" or "benchmark"`);
+  }
+
   await redisClient.connect();
-  console.log("[worker] connected to Redis, waiting for jobs...");
+  console.log(`[worker] connected to Redis in ${WORKER_MODE} mode, waiting for jobs...`);
 
   while (true) {
     try {
@@ -69,7 +74,7 @@ const run = async () => {
 
       if (!jobId) continue;
 
-      console.log(`[worker] checked out job ${jobId}`);
+      if (logJobActivity) console.log(`[worker] checked out job ${jobId}`);
       await processJob(jobId);
     } catch (err) {
       console.error("[worker] error:", err.message);
